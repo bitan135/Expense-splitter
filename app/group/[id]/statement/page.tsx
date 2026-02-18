@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation"
 import { calculateBalances } from "@/lib/logic/calculateBalances"
 import { optimizeSettlement } from "@/lib/logic/optimizeSettlement"
 import { exportStatementPNG } from "@/lib/logic/exportStatementPNG"
+import { cn } from "@/lib/utils"
 
 export default function StatementPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params)
