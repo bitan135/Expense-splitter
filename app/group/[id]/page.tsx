@@ -43,11 +43,14 @@ const MemberItem = memo(({ member, balance }: { member: Member, balance: number 
 })
 MemberItem.displayName = "MemberItem"
 
-const ExpenseItem = memo(({ expense, group, onDelete }: { expense: Expense, group: Group, onDelete: (id: string, eId: string) => void }) => {
+const ExpenseItem = memo(({ expense, group, onClick }: { expense: Expense, group: Group, onClick: (eId: string) => void }) => {
     const payer = group.members.find(m => m.id === expense.paidBy)?.name || "Unknown"
 
     return (
-        <Card className="p-4 active-press relative group overflow-hidden">
+        <Card
+            className="p-4 active-press relative group overflow-hidden cursor-pointer"
+            onClick={() => onClick(expense.id)}
+        >
             <div className="flex justify-between items-start">
                 <div className="flex flex-col gap-1">
                     <span className="font-semibold text-lg leading-tight text-foreground">{expense.title}</span>
@@ -59,18 +62,11 @@ const ExpenseItem = memo(({ expense, group, onDelete }: { expense: Expense, grou
                 </div>
                 <div className="flex flex-col items-end">
                     <span className="font-bold text-xl tabular-nums tracking-tight">₹{expense.amount.toFixed(2)}</span>
+                    <div className="text-[10px] text-primary font-medium mt-1 flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        View Details →
+                    </div>
                 </div>
             </div>
-
-            <button
-                onClick={(e) => {
-                    e.stopPropagation()
-                    if (confirm("Delete expense?")) onDelete(group.id, expense.id)
-                }}
-                className="absolute inset-y-0 right-0 w-16 bg-destructive text-white flex items-center justify-center translate-x-full group-hover:translate-x-0 transition-transform"
-            >
-                <Trash2 size={20} />
-            </button>
         </Card>
     )
 })
@@ -170,7 +166,7 @@ export default function GroupPage({ params }: { params: Promise<{ id: string }> 
                                         key={expense.id}
                                         expense={expense}
                                         group={group}
-                                        onDelete={handleDeleteExpense}
+                                        onClick={(eId) => router.push(`/group/${id}/expense/${eId}`)}
                                     />
                                 ))
                         ) : (

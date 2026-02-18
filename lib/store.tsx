@@ -18,6 +18,7 @@ type Action =
     | { type: "SET_ACTIVE_GROUP"; payload: { id: string | null } }
     | { type: "ADD_MEMBER"; payload: { groupId: string; name: string } }
     | { type: "ADD_EXPENSE"; payload: { groupId: string; expense: Expense } }
+    | { type: "UPDATE_EXPENSE"; payload: { groupId: string; expense: Expense } }
     | { type: "DELETE_EXPENSE"; payload: { groupId: string; expenseId: string } };
 
 // Initial State
@@ -82,6 +83,21 @@ const reducer = (state: AppState, action: Action): AppState => {
                     return {
                         ...g,
                         expenses: [...g.expenses, action.payload.expense],
+                        lastUpdated: Date.now(),
+                    };
+                }),
+            };
+
+        case "UPDATE_EXPENSE":
+            return {
+                ...state,
+                groups: state.groups.map((g) => {
+                    if (g.id !== action.payload.groupId) return g;
+                    return {
+                        ...g,
+                        expenses: g.expenses.map((e) =>
+                            e.id === action.payload.expense.id ? action.payload.expense : e
+                        ),
                         lastUpdated: Date.now(),
                     };
                 }),
