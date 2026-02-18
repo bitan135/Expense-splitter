@@ -7,30 +7,74 @@ import { Header } from "@/components/layout/header"
 import { Button, Card, Input } from "@/components/ui/base"
 import { Modal } from "@/components/ui/modal"
 import { ArrowLeft, Plus, Users, Receipt, FileText, Trash2 } from "lucide-react"
+import { calculateBalances } from "@/lib/logic/calculateBalances"
+import { cn } from "@/lib/utils"
+import { Group, Expense, Member } from "@/types"
 
-const MemberItem = memo(({ member }: { member: { id: string, name: string } }) => (
-    <div className="bg-muted/50 p-2 rounded-lg text-sm truncate">
-        {member.name}
-    </div>
-))
+const MemberItem = memo(({ member, balance }: { member: Member, balance: number }) => {
+    const isPositive = balance > 0
+    const isZero = Math.abs(balance) < 0.01
+
+    return (
+        <Card className="p-4 flex justify-between items-center active-press">
+            <div className="flex items-center gap-4">
+                <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center text-foreground font-bold text-sm">
+                    {member.name.substring(0, 2).toUpperCase()}
+                </div>
+                <span className="font-medium text-base">{member.name}</span>
+            </div>
+
+            {!isZero && (
+                <div className="flex flex-col items-end">
+                    <span className={cn(
+                        "font-bold tabular-nums text-base",
+                        isPositive ? "text-emerald-400" : "text-rose-400"
+                    )}>
+                        {isPositive ? "+" : "-"}₹{Math.abs(balance).toFixed(2)}
+                    </span>
+                    <span className="text-[10px] uppercase font-bold tracking-wider opacity-60">
+                        {isPositive ? "gets back" : "owes"}
+                    </span>
+                </div>
+            )}
+            {isZero && <span className="text-muted-foreground text-sm">Settled</span>}
+        </Card>
+    )
+})
 MemberItem.displayName = "MemberItem"
 
-const ExpenseItem = memo(({ expense, payerName, onDelete }: { expense: any, payerName: string, onDelete: (id: string) => void }) => (
-    <Card className="p-3 flex justify-between items-center transition-all active:scale-[0.98]">
-        <div>
-            <div className="font-medium">{expense.title}</div>
-            <div className="text-xs text-muted-foreground">
-                ₹{expense.amount.toFixed(2)} · Paid by {payerName}
+const ExpenseItem = memo(({ expense, group, onDelete }: { expense: Expense, group: Group, onDelete: (id: string, eId: string) => void }) => {
+    const payer = group.members.find(m => m.id === expense.paidBy)?.name || "Unknown"
+
+    return (
+        <Card className="p-4 active-press relative group overflow-hidden">
+            <div className="flex justify-between items-start mb-1">
+                <div className="flex flex-col">
+                    <span className="font-semibold text-base text-foreground">{expense.title}</span>
+                    <span className="text-xs text-muted-foreground mt-0.5">
+                        <span className="font-medium text-primary/80">{payer}</span> paid
+                    </span>
+                </div>
+                <div className="flex flex-col items-end">
+                    <span className="font-bold text-base tabular-nums">₹{expense.amount.toFixed(2)}</span>
+                    <span className="text-[10px] text-muted-foreground">
+                        {new Date(expense.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                    </span>
+                </div>
             </div>
-        </div>
-        <button
-            onClick={() => onDelete(expense.id)}
-            className="text-muted-foreground hover:text-destructive p-2"
-        >
-            <Trash2 size={16} />
-        </button>
-    </Card>
-))
+
+            <button
+                onClick={(e) => {
+                    e.stopPropagation()
+                    if (confirm("Delete expense?")) onDelete(group.id, expense.id)
+                }}
+                className="absolute inset-y-0 right-0 w-16 bg-destructive/10 text-destructive flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100"
+            >
+                <Trash2 size={18} />
+            </button>
+        </Card>
+    )
+})
 ExpenseItem.displayName = "ExpenseItem"
 
 export default function GroupPage({ params }: { params: Promise<{ id: string }> }) {
@@ -42,6 +86,8 @@ export default function GroupPage({ params }: { params: Promise<{ id: string }> 
 
     const group = state.groups.find(g => g.id === id)
 
+    const balances = group ? calculateBalances(group) : {}
+
     const handleAddMember = useCallback(() => {
         if (!newMemberName.trim()) return
         dispatch({
@@ -52,14 +98,12 @@ export default function GroupPage({ params }: { params: Promise<{ id: string }> 
         setIsAddMemberOpen(false)
     }, [dispatch, id, newMemberName])
 
-    const handleDeleteExpense = useCallback((expenseId: string) => {
-        if (confirm("Delete this expense?")) {
-            dispatch({
-                type: "DELETE_EXPENSE",
-                payload: { groupId: id, expenseId }
-            })
-        }
-    }, [dispatch, id])
+    const handleDeleteExpense = useCallback((groupId: string, expenseId: string) => {
+        dispatch({
+            type: "DELETE_EXPENSE",
+            payload: { groupId, expenseId }
+        })
+    }, [dispatch])
 
     if (!state.loaded) return <div className="p-4 text-center">Loading...</div>
     if (!group) return <div className="p-4 text-center">Group not found</div>
@@ -76,57 +120,65 @@ export default function GroupPage({ params }: { params: Promise<{ id: string }> 
                     </Button>
                 }
             >
-                <div className="bg-card/50 backdrop-blur-sm px-4 py-2 border-b text-xs text-muted-foreground flex justify-between">
-                    <span>{group.members.length} Members</span>
-                    <span>Total: ₹{totalSpend.toFixed(2)}</span>
+                <div className="px-4 py-3 border-b border-white/5 flex justify-between items-center text-xs font-medium text-muted-foreground bg-background/50 backdrop-blur-sm">
+                    <div className="flex items-center gap-2">
+                        <Users size={14} />
+                        <span>{group.members.length} Members</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span>Total:</span>
+                        <span className="text-foreground font-bold text-sm">₹{totalSpend.toFixed(2)}</span>
+                    </div>
                 </div>
             </Header>
 
-            <main className="p-4 max-w-md mx-auto space-y-6">
+            <main className="p-4 max-w-md mx-auto space-y-8">
 
-                {/* Members Section */}
-                <section>
-                    <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-semibold flex items-center gap-2">
-                            <Users size={16} /> Members
-                        </h3>
-                        <Button size="sm" variant="outline" onClick={() => setIsAddMemberOpen(true)}>
+                {/* Member List */}
+                <section className="space-y-4">
+                    <div className="flex items-center justify-between px-1">
+                        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Members</h3>
+                        <Button size="sm" variant="ghost" className="h-8 text-xs hover:bg-white/5" onClick={() => setIsAddMemberOpen(true)}>
                             <Plus size={14} className="mr-1" /> Add
                         </Button>
                     </div>
-                    <div className="grid grid-cols-2 gap-2">
-                        {group.members.map(m => (
-                            <MemberItem key={m.id} member={m} />
+                    <div className="grid gap-3">
+                        {group.members.map(member => (
+                            <MemberItem
+                                key={member.id}
+                                member={member}
+                                balance={balances[member.id] || 0}
+                            />
                         ))}
                         {group.members.length === 0 && (
-                            <div className="col-span-2 text-sm text-muted-foreground italic">
+                            <div className="text-center py-8 text-muted-foreground bg-secondary/30 rounded-3xl border border-dashed border-border">
                                 No members yet. Add people to split costs.
                             </div>
                         )}
                     </div>
                 </section>
 
-                {/* Expenses Section */}
-                <section>
-                    <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-semibold flex items-center gap-2">
-                            <Receipt size={16} /> Expenses
-                        </h3>
+                {/* Expense List */}
+                <section className="space-y-4 pb-20">
+                    <div className="flex items-center justify-between px-1">
+                        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Expenses</h3>
+                        <span className="text-xs text-muted-foreground">Recent activity</span>
                     </div>
-                    <div className="space-y-2">
-                        {group.expenses.slice().reverse().map(expense => {
-                            const payer = group.members.find(m => m.id === expense.paidBy)?.name || "Unknown"
-                            return (
-                                <ExpenseItem
-                                    key={expense.id}
-                                    expense={expense}
-                                    payerName={payer}
-                                    onDelete={handleDeleteExpense}
-                                />
-                            )
-                        })}
-                        {group.expenses.length === 0 && (
-                            <div className="text-center py-6 border-2 border-dashed rounded-xl text-muted-foreground">
+                    <div className="grid gap-3">
+                        {group.expenses.length > 0 ? (
+                            group.expenses
+                                .slice()
+                                .reverse()
+                                .map(expense => (
+                                    <ExpenseItem
+                                        key={expense.id}
+                                        expense={expense}
+                                        group={group}
+                                        onDelete={handleDeleteExpense}
+                                    />
+                                ))
+                        ) : (
+                            <div className="text-center py-12 text-muted-foreground bg-secondary/30 rounded-3xl border border-dashed border-border">
                                 No expenses yet.
                             </div>
                         )}
@@ -134,19 +186,19 @@ export default function GroupPage({ params }: { params: Promise<{ id: string }> 
                 </section>
 
                 {/* Floating Actions */}
-                <div className="fixed bottom-6 right-6 z-30 flex flex-col gap-3 items-end">
+                <div className="fixed bottom-8 right-6 z-30 flex flex-col gap-4 items-end pointer-events-none">
                     <Button
                         onClick={() => router.push(`/group/${id}/statement`)}
-                        className="h-12 rounded-full shadow-lg bg-secondary text-secondary-foreground"
+                        className="h-12 px-6 rounded-full shadow-lg bg-secondary text-secondary-foreground pointer-events-auto backdrop-blur-md bg-opacity-90 border border-white/10"
                     >
                         <FileText size={18} className="mr-2" /> Statement
                     </Button>
                     <Button
                         onClick={() => router.push(`/group/${id}/expense/new`)}
                         size="icon"
-                        className="h-14 w-14 rounded-full shadow-lg"
+                        className="h-16 w-16 rounded-full shadow-2xl shadow-primary/30 pointer-events-auto active:scale-95 transition-transform"
                     >
-                        <Plus size={24} />
+                        <Plus size={32} />
                     </Button>
                 </div>
 
@@ -158,15 +210,16 @@ export default function GroupPage({ params }: { params: Promise<{ id: string }> 
                 onClose={() => setIsAddMemberOpen(false)}
                 title="Add Member"
             >
-                <div className="space-y-4">
+                <div className="space-y-6 pt-2">
                     <Input
                         autoFocus
-                        placeholder="Name"
+                        placeholder="Enter name"
                         value={newMemberName}
                         onChange={(e) => setNewMemberName(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleAddMember()}
+                        className="text-lg"
                     />
-                    <Button className="w-full" onClick={handleAddMember}>Add Member</Button>
+                    <Button className="w-full" size="lg" onClick={handleAddMember}>Add to Group</Button>
                 </div>
             </Modal>
         </div>

@@ -47,8 +47,8 @@ export default function StatementPage({ params }: { params: Promise<{ id: string
 
                 {/* Net Balances */}
                 <section>
-                    <h3 className="font-semibold mb-3">Net Balances</h3>
-                    <Card className="divide-y divide-border">
+                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-1">Net Balances</h3>
+                    <div className="grid grid-cols-1 gap-2">
                         {Object.entries(balances)
                             .sort(([, a], [, b]) => b - a) // Most positive first
                             .map(([memberId, amount]) => {
@@ -57,40 +57,68 @@ export default function StatementPage({ params }: { params: Promise<{ id: string
 
                                 const isPositive = amount > 0
                                 return (
-                                    <div key={memberId} className="p-4 flex justify-between items-center">
-                                        <span className="font-medium">{member.name}</span>
-                                        <span className={isPositive ? "text-green-500 font-bold" : "text-red-500 font-bold"}>
-                                            {isPositive ? "Gets" : "Pays"} ₹{Math.abs(amount).toFixed(2)}
-                                        </span>
-                                    </div>
+                                    <Card key={memberId} className="p-4 flex justify-between items-center bg-card/40 border-l-4" style={{ borderLeftColor: isPositive ? '#34D399' : '#F87171' }}>
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center font-bold text-xs text-muted-foreground">
+                                                {member.name.substring(0, 2).toUpperCase()}
+                                            </div>
+                                            <span className="font-medium text-lg">{member.name}</span>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className={cn("text-lg font-bold tabular-nums", isPositive ? "text-emerald-400" : "text-rose-400")}>
+                                                {isPositive ? "+" : "-"}₹{Math.abs(amount).toFixed(2)}
+                                            </div>
+                                            <div className="text-[10px] uppercase tracking-wide opacity-50 font-bold">
+                                                {isPositive ? "Gets Back" : "Owes"}
+                                            </div>
+                                        </div>
+                                    </Card>
                                 )
                             })}
                         {Object.keys(balances).length === 0 && (
                             <div className="p-4 text-center text-muted-foreground">No balances yet</div>
                         )}
-                    </Card>
+                    </div>
                 </section>
 
                 {/* Settlement Plan */}
-                <section>
-                    <h3 className="font-semibold mb-3">Settlement Plan</h3>
-                    <Card className="divide-y divide-border">
+                <section className="pb-20">
+                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-1">Settlement Plan</h3>
+                    <div className="space-y-2">
                         {settlements.map((s, i) => {
                             const from = group.members.find(m => m.id === s.from)?.name
                             const to = group.members.find(m => m.id === s.to)?.name
                             return (
-                                <div key={i} className="p-4 flex justify-between items-center">
-                                    <div className="flex flex-col">
-                                        <span className="text-sm text-foreground">{from} <span className="text-muted-foreground">pays</span> {to}</span>
+                                <Card key={i} className="p-5 flex items-center gap-4 bg-gradient-to-r from-card to-secondary/20">
+                                    <div className="flex-1 flex items-center justify-between">
+                                        <div className="flex flex-col">
+                                            <span className="font-medium text-lg text-foreground">{from}</span>
+                                            <span className="text-xs text-muted-foreground uppercase tracking-wide">Must pay</span>
+                                        </div>
+
+                                        <div className="flex flex-col items-center px-4">
+                                            <span className="text-xs text-muted-foreground mb-1">→</span>
+                                            <div className="h-px w-12 bg-border"></div>
+                                        </div>
+
+                                        <div className="flex flex-col items-end">
+                                            <span className="font-medium text-lg text-foreground">{to}</span>
+                                            <span className="text-xs text-muted-foreground uppercase tracking-wide">Receive</span>
+                                        </div>
                                     </div>
-                                    <span className="font-bold">₹{s.amount.toFixed(2)}</span>
-                                </div>
+
+                                    <div className="pl-4 border-l border-border/50">
+                                        <span className="font-bold text-lg text-primary tabular-nums">₹{s.amount.toFixed(0)}</span>
+                                    </div>
+                                </Card>
                             )
                         })}
                         {settlements.length === 0 && (
-                            <div className="p-4 text-center text-muted-foreground">All settled up!</div>
+                            <div className="p-8 text-center bg-secondary/20 rounded-3xl border border-dashed border-border/50">
+                                <span className="text-muted-foreground">All settled up! 🎉</span>
+                            </div>
                         )}
-                    </Card>
+                    </div>
                 </section>
 
                 <Button className="w-full h-12" onClick={handleExport}>
