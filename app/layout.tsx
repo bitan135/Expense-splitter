@@ -37,9 +37,11 @@ export const metadata: Metadata = {
     startupImage: [],
   },
   icons: {
-    icon: "/icon-192.svg",
-    shortcut: "/icon-192.svg",
-    apple: "/apple-touch-icon.png",
+    icon: "/icon-192.png",
+    shortcut: "/icon-192.png",
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
   },
 };
 

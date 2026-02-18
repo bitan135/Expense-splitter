@@ -11,33 +11,54 @@ import { calculateBalances } from "@/lib/logic/calculateBalances"
 import { cn } from "@/lib/utils"
 import { Group, Expense, Member } from "@/types"
 
-const MemberItem = memo(({ member, balance }: { member: Member, balance: number }) => {
+const MemberItem = memo(({ member, balance, onSettle }: { member: Member, balance: number, onSettle: (type: 'pay' | 'receive', memberId: string, amount: number) => void }) => {
     const isPositive = balance > 0
     const isZero = Math.abs(balance) < 0.01
 
     return (
         <Card className="p-4 flex justify-between items-center active-press">
             <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-full bg-secondary flex items-center justify-center text-foreground font-bold text-base">
+                <div className="h-12 w-12 rounded-full bg-secondary flex items-center justify-center text-foreground font-bold text-base relative">
                     {member.name.substring(0, 2).toUpperCase()}
+                    {!isZero && (
+                        <div className={cn(
+                            "absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-card flex items-center justify-center text-[10px] font-bold text-white",
+                            isPositive ? "bg-emerald-500" : "bg-rose-500"
+                        )}>
+                            {isPositive ? "R" : "P"}
+                        </div>
+                    )}
                 </div>
-                <span className="font-semibold text-base">{member.name}</span>
+                <div className="flex flex-col">
+                    <span className="font-semibold text-base">{member.name}</span>
+                    {!isZero && (
+                        <span className={cn(
+                            "text-xs font-bold tabular-nums",
+                            isPositive ? "text-emerald-500" : "text-rose-500"
+                        )}>
+                            {isPositive ? "Gets back" : "Owes"} ₹{Math.abs(balance).toFixed(2)}
+                        </span>
+                    )}
+                    {isZero && <span className="text-xs text-muted-foreground">Settled</span>}
+                </div>
             </div>
 
             {!isZero && (
-                <div className="flex flex-col items-end">
-                    <span className={cn(
-                        "font-bold tabular-nums text-lg",
-                        isPositive ? "text-emerald-500" : "text-rose-500"
-                    )}>
-                        {isPositive ? "+" : "-"}₹{Math.abs(balance).toFixed(2)}
-                    </span>
-                    <span className="text-[10px] uppercase font-bold tracking-wider opacity-50">
-                        {isPositive ? "gets back" : "owes"}
-                    </span>
-                </div>
+                <Button
+                    size="sm"
+                    variant={isPositive ? "secondary" : "destructive"}
+                    className={cn(
+                        "h-8 px-3 text-xs font-bold shadow-sm transition-all active:scale-95",
+                        isPositive ? "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20" : "bg-rose-500/10 text-rose-600 hover:bg-rose-500/20"
+                    )}
+                    onClick={(e) => {
+                        e.stopPropagation()
+                        onSettle(isPositive ? 'receive' : 'pay', member.id, Math.abs(balance))
+                    }}
+                >
+                    {isPositive ? "Received" : "Settle"}
+                </Button>
             )}
-            {isZero && <span className="text-muted-foreground text-sm font-medium">Settled</span>}
         </Card>
     )
 })
@@ -72,6 +93,10 @@ const ExpenseItem = memo(({ expense, group, onClick }: { expense: Expense, group
 })
 ExpenseItem.displayName = "ExpenseItem"
 
+import { SettlementModal } from "@/components/group/settlement-modal"
+
+// ... imports remain the same
+
 export default function GroupPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params)
     const { state, dispatch } = useStore()
@@ -79,8 +104,15 @@ export default function GroupPage({ params }: { params: Promise<{ id: string }> 
     const [isAddMemberOpen, setIsAddMemberOpen] = useState(false)
     const [newMemberName, setNewMemberName] = useState("")
 
-    const group = state.groups.find(g => g.id === id)
+    // Settlement Logic
+    const [settlementModalOpen, setSettlementModalOpen] = useState(false)
+    const [settlementContext, setSettlementContext] = useState<{
+        payerId?: string,
+        receiverId?: string,
+        maxAmount: number
+    }>({ maxAmount: 0 })
 
+    const group = state.groups.find(g => g.id === id)
     const balances = group ? calculateBalances(group) : {}
 
     const handleAddMember = useCallback(() => {
@@ -99,6 +131,26 @@ export default function GroupPage({ params }: { params: Promise<{ id: string }> 
             payload: { groupId, expenseId }
         })
     }, [dispatch])
+
+    const openSettlement = useCallback((type: 'pay' | 'receive', memberId: string, amount: number) => {
+        if (type === 'pay') {
+            // Member owes money. They are the Payer.
+            // Be smart: Default Receiver? Maybe the one owed the most?
+            // For now, let user pick receiver. Payer is fixed.
+            setSettlementContext({
+                payerId: memberId,
+                maxAmount: amount
+            })
+        } else {
+            // Member is owed money. They are the Receiver.
+            // Payer is someone who owes money.
+            setSettlementContext({
+                receiverId: memberId,
+                maxAmount: amount
+            })
+        }
+        setSettlementModalOpen(true)
+    }, [])
 
     if (!state.loaded) return <div className="p-10 text-center text-muted-foreground">Loading...</div>
     if (!group) return <div className="p-10 text-center text-muted-foreground">Group not found</div>
@@ -141,6 +193,7 @@ export default function GroupPage({ params }: { params: Promise<{ id: string }> 
                                 key={member.id}
                                 member={member}
                                 balance={balances[member.id] || 0}
+                                onSettle={openSettlement}
                             />
                         ))}
                         {group.members.length === 0 && (
@@ -160,7 +213,7 @@ export default function GroupPage({ params }: { params: Promise<{ id: string }> 
                         {group.expenses.length > 0 ? (
                             group.expenses
                                 .slice()
-                                .reverse()
+                                .sort((a, b) => b.createdAt - a.createdAt)
                                 .map(expense => (
                                     <ExpenseItem
                                         key={expense.id}
@@ -213,6 +266,16 @@ export default function GroupPage({ params }: { params: Promise<{ id: string }> 
                     <Button className="w-full" size="lg" onClick={handleAddMember}>Add to Group</Button>
                 </div>
             </Modal>
+
+            {/* Settlement Modal */}
+            <SettlementModal
+                isOpen={settlementModalOpen}
+                onClose={() => setSettlementModalOpen(false)}
+                group={group}
+                initialPayerId={settlementContext.payerId}
+                initialReceiverId={settlementContext.receiverId}
+                maxAmount={settlementContext.maxAmount}
+            />
         </div>
     )
 }
