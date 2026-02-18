@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useStore } from "@/lib/store"
 import { Button, Card, Input } from "@/components/ui/base"
@@ -15,6 +15,12 @@ export default function HomePage() {
   const { theme, setTheme } = useTheme()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [newGroupName, setNewGroupName] = useState("")
+  const [mounted, setMounted] = useState(false)
+
+  // Avoid hydration mismatch
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const handleCreateGroup = () => {
     if (!newGroupName.trim()) return
@@ -39,8 +45,16 @@ export default function HomePage() {
       <Header
         title="Your Groups"
         rightAction={
-          <button onClick={toggleTheme} className="p-2 rounded-full hover:bg-muted">
-            {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-full hover:bg-muted transition-colors"
+            aria-label="Toggle theme"
+          >
+            {mounted ? (
+              theme === "dark" ? <Sun size={20} /> : <Moon size={20} />
+            ) : (
+              <div className="w-5 h-5" /> // Placeholder
+            )}
           </button>
         }
       />

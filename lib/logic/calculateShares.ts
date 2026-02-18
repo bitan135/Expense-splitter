@@ -29,9 +29,17 @@ export const calculateShares = (
 
     switch (type) {
         case 'equal': {
-            // Weight is 1 for everyone
+            // Weight is 1 for everyone, unless explicitly set to 0 (excluded)
             const weights: Record<string, number> = {};
-            memberIds.forEach(id => weights[id] = 1);
+            memberIds.forEach(id => {
+                // If the passed split has 0, it means user excluded this person.
+                // We check strict 0 because undefined should default to included (1).
+                if (activeSplits[id] === 0) {
+                    weights[id] = 0;
+                } else {
+                    weights[id] = 1;
+                }
+            });
             return distributeTotal(amount, weights);
         }
 
