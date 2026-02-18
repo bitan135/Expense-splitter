@@ -22,14 +22,7 @@ export default function AddExpensePage({ params }: { params: Promise<{ id: strin
     const [splitType, setSplitType] = useState<SplitType>("equal")
     const [splits, setSplits] = useState<Record<string, number>>({})
     const [error, setError] = useState<string | null>(null)
-
-    // Helper for input values
-    const getInputValue = (memberId: string) => {
-        const val = splits[memberId]
-        return val === undefined || val === 0 ? "" : val.toString()
-    }
-
-    const [excludeList, setExcludeList] = useState<string[]>([]) // For equal split exclusions
+    const [excludeList, setExcludeList] = useState<string[]>([])
 
     // Calculate equal shares for display
     const calculateEqualShare = useCallback(() => {
@@ -53,6 +46,11 @@ export default function AddExpensePage({ params }: { params: Promise<{ id: strin
     if (!state.loaded) return <div>Loading...</div>
     if (!group) return <div>Group not found</div>
 
+    const getInputValue = (memberId: string) => {
+        const val = splits[memberId]
+        return val === undefined || val === 0 ? "" : val.toString()
+    }
+
     const handleSplitChange = useCallback((memberId: string, value: string) => {
         const num = parseFloat(value) || 0
         setSplits(prev => ({ ...prev, [memberId]: num }))
@@ -74,55 +72,20 @@ export default function AddExpensePage({ params }: { params: Promise<{ id: strin
         if (!paidBy) return setError("Select payer")
 
         try {
-            // Prepare splits based on type
             let finalSplits: Record<string, number> = {}
 
             if (splitType === 'equal') {
-                // Determine who is included
                 const includedMembers = group.members.filter(m => !excludeList.includes(m.id))
-                // Logic usually handled by `calculateShares` helper if we pass 'equal'
-                // But we need to pass explicit splits for the helper if it expects them?
-                // Actually calculateShares logic handles 'equal' by distributing to all members passed. 
-                // So for exclusions we should treat it as 'exact' or pass specific instructions?
-                // The existing `calculateShares` likely re-distributes for equal. 
-                // Let's rely on the helper but we might need to conform to its expected input.
-                // If the helper expects us to pass the raw input splits, for equal it ignores them usually.
-                // But for exclusion support we might need to hack it or update helper. 
-                // For safety, let's treat generic 'equal' spread here:
                 const share = numAmount / includedMembers.length
                 group.members.forEach(m => {
                     finalSplits[m.id] = excludeList.includes(m.id) ? 0 : share
                 })
-                // We'll actually store 'equal' as type but fixed splits? Or trust helper? 
-                // If we pass 'equal', helper usually overwrites splits. 
-                // Let's perform the calc and save as 'exact' to ensure precision? 
-                // No, better to keep 'equal' for future editing intelligence.
-                // We will pass the `finalSplits` into the helper which hopefully respects 0s if we handle it there??
-                // Checking logic... standard `calculateShares` usually just divides by total members. 
-                // If we want exclusion, we should probably pass `excludeList` logic or just save as 'exact' for now to be safe.
-                // Let's double check `calculateShares.ts` implementation... 
-                // We can't see it now. Let's make it robust by converting to 'exact' or 'custom' if we have exclusions.
-                if (excludeList.length > 0) {
-                    // actually let's just pass the splits we calculated and use 'exact' to be safe 
-                    // UNTIL we verify helper supports exclusions for equal.
-                    // WAIT: standard generic splitters usually handle this by just setting weight 0.
-                }
             } else {
                 finalSplits = { ...splits }
             }
 
-            // Let's use the helper to validate
-            // If we are using 'equal' with exclusions, we might need to manually patch it or use a different type
-            // wrapper for safety:
-            if (splitType === 'equal' && excludeList.length > 0) {
-                // Force exact distribution
-                // Update: to avoid logic mismatch, let's just use the computed values
-            }
-
-            // We blindly trust our pre-calc for now or standard helper
             calculateShares(numAmount, splitType, finalSplits, group.members)
 
-            // Create Expense
             const expense: Expense = {
                 id: generateId(),
                 groupId: group.id,
@@ -151,61 +114,61 @@ export default function AddExpensePage({ params }: { params: Promise<{ id: strin
     }, [amount, title, paidBy, splitType, splits, group, dispatch, router, excludeList])
 
     return (
-        <div className="min-h-screen bg-background pb-20">
+        <div className="min-h-screen bg-background pb-32">
             <Header
                 title="Add Expense"
                 rightAction={
                     <Button variant="ghost" size="icon" onClick={() => router.back()}>
-                        <X />
+                        <X className="text-muted-foreground" />
                     </Button>
                 }
             />
 
-            <main className="p-4 max-w-md mx-auto">
+            <main className="p-5 max-w-md mx-auto">
 
-                {/* Amount Input Hero */}
-                <div className="pt-2 pb-6 flex flex-col items-center">
-                    <label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">Amount</label>
-                    <div className="relative w-full max-w-[200px]">
-                        <span className="absolute left-0 top-1/2 -translate-y-1/2 text-3xl font-bold text-muted-foreground">₹</span>
+                {/* Massive Amount Input */}
+                <div className="py-10 flex flex-col items-center justify-center">
+                    <div className="relative w-full flex justify-center items-center">
+                        <span className="text-4xl font-semibold text-muted-foreground/50 mr-2 -mt-2">₹</span>
                         <input
                             type="number"
                             inputMode="decimal"
                             value={amount}
                             autoFocus
                             onChange={(e) => setAmount(e.target.value)}
-                            className="w-full bg-transparent text-5xl font-bold text-center text-foreground placeholder:text-muted-foreground/20 focus:outline-none py-2"
+                            className="bg-transparent text-[5rem] font-bold text-center text-foreground placeholder:text-muted-foreground/20 focus:outline-none w-full leading-none tracking-tight"
                             placeholder="0"
                         />
                     </div>
+                    <label className="text-label mt-4">Enter Amount</label>
                 </div>
 
-                <div className="space-y-6">
+                <div className="space-y-8">
                     {/* Description */}
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium text-muted-foreground ml-1">Description</label>
+                    <div className="space-y-3">
+                        <label className="text-label ml-1">Title</label>
                         <Input
-                            placeholder="What's this for?"
+                            placeholder="Dinner, Taxi, etc."
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
-                            className="text-lg bg-card/50"
+                            className="text-xl h-16 bg-secondary"
                         />
                     </div>
 
                     {/* Paid By */}
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium text-muted-foreground ml-1">Paid By</label>
-                        <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-3">
+                        <label className="text-label ml-1">Paid By</label>
+                        <div className="flex flex-wrap gap-2">
                             {group.members.map(member => (
                                 <button
                                     key={member.id}
                                     type="button"
                                     onClick={() => setPaidBy(member.id)}
                                     className={cn(
-                                        "h-12 rounded-xl text-sm font-medium transition-all active-press border",
+                                        "h-10 px-5 rounded-full text-sm font-semibold transition-all active-press",
                                         paidBy === member.id
-                                            ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/10"
-                                            : "bg-secondary/30 text-muted-foreground border-transparent hover:bg-secondary/50"
+                                            ? "bg-foreground text-background shadow-lg scale-105"
+                                            : "bg-secondary text-muted-foreground hover:bg-secondary/80"
                                     )}
                                 >
                                     {member.name}
@@ -215,42 +178,41 @@ export default function AddExpensePage({ params }: { params: Promise<{ id: strin
                     </div>
 
                     {/* Split Type Selector */}
-                    <div className="p-1 bg-secondary/30 rounded-2xl flex relative">
-                        {["equal", "exact", "percent"].map((t) => (
-                            <button
-                                key={t}
-                                type="button"
-                                onClick={() => {
-                                    setSplitType(t as any)
-                                    if (t === "equal") {
+                    <div className="space-y-3">
+                        <label className="text-label ml-1">Split Method</label>
+                        <div className="p-1 bg-secondary rounded-2xl flex relative">
+                            {["equal", "exact", "percent"].map((t) => (
+                                <button
+                                    key={t}
+                                    type="button"
+                                    onClick={() => {
+                                        setSplitType(t as any)
                                         setSplits({})
-                                    } else {
-                                        setSplits({})
-                                    }
-                                }}
-                                className={cn(
-                                    "flex-1 py-2.5 text-xs font-bold uppercase tracking-wider rounded-xl transition-all z-10",
-                                    splitType === t
-                                        ? "bg-primary text-primary-foreground shadow-sm"
-                                        : "text-muted-foreground hover:text-foreground"
-                                )}
-                            >
-                                {t}
-                            </button>
-                        ))}
+                                    }}
+                                    className={cn(
+                                        "flex-1 py-3 text-xs font-bold uppercase tracking-wider rounded-xl transition-all z-10",
+                                        splitType === t
+                                            ? "bg-background text-foreground shadow-sm"
+                                            : "text-muted-foreground hover:text-foreground"
+                                    )}
+                                >
+                                    {t}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
                     {/* Members List for Split */}
                     <div className="space-y-3">
                         {group.members.map(member => (
-                            <Card key={member.id} className="p-4 flex items-center justify-between bg-card/50">
+                            <Card key={member.id} className="p-4 flex items-center justify-between bg-card">
                                 <div className="flex items-center gap-3">
                                     {splitType === "equal" && (
                                         <button
                                             type="button"
                                             onClick={() => handleExcludeToggle(member.id)}
                                             className={cn(
-                                                "w-6 h-6 rounded-full flex items-center justify-center border transition-colors",
+                                                "w-6 h-6 rounded-full flex items-center justify-center border-2 transition-colors",
                                                 !excludeList.includes(member.id)
                                                     ? "bg-emerald-500 border-emerald-500 text-white"
                                                     : "border-muted-foreground/30 text-transparent"
@@ -260,17 +222,17 @@ export default function AddExpensePage({ params }: { params: Promise<{ id: strin
                                         </button>
                                     )}
                                     <span className={cn(
-                                        "font-medium transition-opacity",
-                                        excludeList.includes(member.id) && splitType === "equal" ? "opacity-40" : "opacity-100"
+                                        "font-medium text-lg transition-opacity",
+                                        excludeList.includes(member.id) && splitType === "equal" ? "opacity-30" : "opacity-100"
                                     )}>
                                         {member.name}
                                     </span>
                                 </div>
 
-                                <div className="w-28 text-right">
+                                <div className="w-32 text-right">
                                     {splitType === "equal" ? (
-                                        <span className="text-muted-foreground font-mono">
-                                            ₹{(calculateSharesDisplay[member.id] || 0).toFixed(2)}
+                                        <span className={cn("text-lg font-mono", excludeList.includes(member.id) ? "text-muted-foreground line-through" : "text-foreground font-bold")}>
+                                            ₹{(calculateSharesDisplay[member.id] || 0).toFixed(0)}
                                         </span>
                                     ) : (
                                         <div className="relative">
@@ -279,7 +241,7 @@ export default function AddExpensePage({ params }: { params: Promise<{ id: strin
                                             </span>
                                             <input
                                                 type="number"
-                                                className="w-full bg-secondary/50 rounded-lg py-1.5 pl-2 pr-6 text-right text-sm focus:outline-none focus:ring-2 ring-primary/20 font-mono"
+                                                className="w-full bg-secondary rounded-lg py-2 pl-2 pr-6 text-right text-lg font-bold focus:outline-none focus:ring-2 ring-foreground/20 font-mono"
                                                 placeholder="0"
                                                 value={getInputValue(member.id)}
                                                 onChange={(e) => handleSplitChange(member.id, e.target.value)}
@@ -290,19 +252,18 @@ export default function AddExpensePage({ params }: { params: Promise<{ id: strin
                             </Card>
                         ))}
                     </div>
-                </div>
 
-                <div className="pt-8 pb-12">
                     <Button
                         onClick={handleSubmit}
-                        className="w-full shadow-xl shadow-primary/10 h-14 text-lg rounded-2xl"
+                        className="w-full h-16 text-lg rounded-2xl shadow-xl bg-primary text-primary-foreground font-bold mt-8"
                         size="lg"
                         disabled={!amount || parseFloat(amount) <= 0}
                     >
                         Save Expense
                     </Button>
+
                     {error && (
-                        <div className="mt-4 p-3 rounded-xl bg-destructive/10 text-destructive text-center text-sm font-medium">
+                        <div className="p-4 rounded-2xl bg-destructive/10 text-destructive text-center font-semibold">
                             {error}
                         </div>
                     )}

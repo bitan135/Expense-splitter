@@ -2,64 +2,74 @@
 
 @layer base {
   :root {
-    --background: #f8f9fa;
-    --foreground: #111827;
-    --card: #ffffff;
-    --card-foreground: #111827;
-    --popover: #ffffff;
-    --popover-foreground: #111827;
-    --primary: #111827;
-    --primary-foreground: #f9fafb;
-    --secondary: #f3f4f6;
-    --secondary-foreground: #111827;
-    --muted: #f3f4f6;
-    --muted-foreground: #6b7280;
-    --accent: #f3f4f6;
-    --accent-foreground: #111827;
-    --destructive: #ef4444;
-    --destructive-foreground: #f9fafb;
-    --border: #e5e7eb;
-    --input: #e5e7eb;
-    --ring: #111827;
+    /* Premium Light Mode (Warm & crisp) */
+    --background: #FFFFFF;
+    --foreground: #09090B;
+    /* Almost black for sharp contrast */
+
+    --card: #F4F4F5;
+    /* Subtle gray surface */
+    --card-foreground: #09090B;
+
+    --popover: #FFFFFF;
+    --popover-foreground: #09090B;
+
+    --primary: #18181B;
+    --primary-foreground: #FAFAFA;
+
+    --secondary: #F4F4F5;
+    --secondary-foreground: #18181B;
+
+    --muted: #F4F4F5;
+    --muted-foreground: #71717A;
+    /* Darker gray for readability */
+
+    --accent: #F4F4F5;
+    --accent-foreground: #18181B;
+
+    --destructive: #EF4444;
+    --destructive-foreground: #FAFAFA;
+
+    --border: #E4E4E7;
+    --input: #E4E4E7;
+    --ring: #18181B;
+
     --radius: 1.5rem;
-    /* Larger radius for modern feel */
   }
 
   .dark {
-    /* Deep Charcoal Theme - 2026 Fintech */
-    --background: #0E1116;
-    /* Darker, richer charcoal */
-    --foreground: #F9FAFB;
-    /* Soft white */
+    /* Premium Dark Mode (Deep & High Contrast) */
+    --background: #000000;
+    /* OLED Black */
+    --foreground: #FFFFFF;
+    /* Pure White */
 
-    --card: #161B22;
-    /* Slightly elevated surface */
-    --card-foreground: #F9FAFB;
+    --card: #121212;
+    /* Distinct Surface */
+    --card-foreground: #FFFFFF;
 
-    --popover: #161B22;
-    --popover-foreground: #F9FAFB;
+    --popover: #121212;
+    --popover-foreground: #FFFFFF;
 
-    --primary: #F9FAFB;
-    --primary-foreground: #0E1116;
+    --primary: #FFFFFF;
+    --primary-foreground: #000000;
 
-    /* Subtle separation instead of harsh borders */
-    --secondary: #21262D;
-    --secondary-foreground: #F9FAFB;
+    --secondary: #1E1E1E;
+    --secondary-foreground: #FFFFFF;
 
-    --muted: #21262D;
-    --muted-foreground: #8B949E;
-    /* Muted text for secondary info */
+    --muted: #1E1E1E;
+    --muted-foreground: #A1A1AA;
+    /* Lighter gray for dark mode readability */
 
-    --accent: #21262D;
-    --accent-foreground: #F9FAFB;
+    --accent: #1E1E1E;
+    --accent-foreground: #FFFFFF;
 
-    --destructive: #F85149;
-    --destructive-foreground: #F9FAFB;
+    --destructive: #F87171;
+    --destructive-foreground: #000000;
 
-    --border: rgba(240, 246, 252, 0.1);
-    /* Very subtle border */
-    --input: rgba(240, 246, 252, 0.1);
-    --ring: #2a2e35;
+    --border: #27272A;
+    --input: #27272A;
+    --ring: #D4D4D8;
   }
 }
 
@@ -89,8 +99,7 @@
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-  /* Recommend Inter if available, mostly system fallback */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
@@ -99,14 +108,6 @@ body {
   touch-action: manipulation;
   overscroll-behavior-y: none;
   padding-bottom: env(safe-area-inset-bottom);
-  letter-spacing: -0.01em;
-  /* Tighter modern tracking */
-}
-
-/* Hide scrollbar */
-::-webkit-scrollbar {
-  width: 0px;
-  background: transparent;
 }
 
 /* Utilities */
@@ -118,26 +119,62 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-.glass {
-  background: rgba(14, 17, 22, 0.85);
-  /* Darker glass for better contrast */
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(240, 246, 252, 0.05);
+/* Hide scrollbar */
+::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
 }
 
-.card-gradient {
-  background: linear-gradient(180deg, rgba(22, 27, 34, 1) 0%, rgba(22, 27, 34, 0.8) 100%);
-  border: 1px solid var(--border);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+/* Premium Card */
+.premium-card {
+  background-color: var(--card);
+  border-radius: 1.75rem;
+  /* 28px */
+  transition: all 0.2s ease-out;
 }
 
-.text-balance {
-  text-wrap: balance;
+/* Light mode specific shadow */
+:root:not(.dark) .premium-card {
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+/* Dark mode specific border */
+.dark .premium-card {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Glass Header */
+.glass-header {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.dark .glass-header {
+  background: rgba(0, 0, 0, 0.7);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Typography */
+.text-hero {
+  font-size: 3.5rem;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.text-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  color: var(--muted-foreground);
 }
 
 /* Animations */
 .active-press:active {
-  transform: scale(0.97);
-  transition: transform 0.1s ease-out;
+  transform: scale(0.96);
+  transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
 }
