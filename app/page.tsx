@@ -1,65 +1,108 @@
-import Image from "next/image";
+"use client"
 
-export default function Home() {
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { useStore } from "@/lib/store"
+import { Button, Card, Input } from "@/components/ui/base"
+import { Modal } from "@/components/ui/modal"
+import { Header } from "@/components/layout/header"
+import { Plus, Trash2, Moon, Sun } from "lucide-react"
+import { useTheme } from "next-themes"
+
+export default function HomePage() {
+  const { state, dispatch } = useStore()
+  const router = useRouter()
+  const { theme, setTheme } = useTheme()
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [newGroupName, setNewGroupName] = useState("")
+
+  const handleCreateGroup = () => {
+    if (!newGroupName.trim()) return
+    dispatch({ type: "CREATE_GROUP", payload: { name: newGroupName.trim() } })
+    setNewGroupName("")
+    setIsModalOpen(false)
+  }
+
+  const handleDeleteGroup = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation()
+    if (confirm("Delete this group? This action cannot be undone.")) {
+      dispatch({ type: "DELETE_GROUP", payload: { id } })
+    }
+  }
+
+  const toggleTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark")
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="min-h-screen bg-background pb-20">
+      <Header
+        title="Your Groups"
+        rightAction={
+          <button onClick={toggleTheme} className="p-2 rounded-full hover:bg-muted">
+            {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
+          </button>
+        }
+      />
+
+      <main className="p-4 max-w-md mx-auto space-y-4">
+        {state.loaded && state.groups.length === 0 && (
+          <div className="text-center py-10 text-muted-foreground">
+            <p>No groups yet.</p>
+            <p className="text-sm">Create one to start splitting!</p>
+          </div>
+        )}
+
+        {state.groups.map(group => (
+          <Card
+            key={group.id}
+            onClick={() => router.push(`/group/${group.id}`)}
+            className="p-4 flex items-center justify-between cursor-pointer hover:bg-muted/50 transition-colors active:scale-[0.98]"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            <div>
+              <h3 className="font-semibold text-lg">{group.name}</h3>
+              <p className="text-sm text-muted-foreground">
+                {group.members.length} members · {group.expenses.length} expenses
+              </p>
+            </div>
+            <button
+              onClick={(e) => handleDeleteGroup(e, group.id)}
+              className="p-2 text-destructive hover:bg-destructive/10 rounded-full transition-colors"
+            >
+              <Trash2 size={18} />
+            </button>
+          </Card>
+        ))}
+
+        <div className="fixed bottom-6 right-6 z-30">
+          <Button
+            size="icon"
+            className="h-14 w-14 rounded-full shadow-lg"
+            onClick={() => setIsModalOpen(true)}
           >
-            Documentation
-          </a>
+            <Plus size={24} />
+          </Button>
         </div>
       </main>
+
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Create New Group"
+      >
+        <div className="space-y-4">
+          <Input
+            autoFocus
+            placeholder="Group Name (e.g. Goa Trip)"
+            value={newGroupName}
+            onChange={(e) => setNewGroupName(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleCreateGroup()}
+          />
+          <Button className="w-full" onClick={handleCreateGroup}>
+            Create Group
+          </Button>
+        </div>
+      </Modal>
     </div>
-  );
+  )
 }
