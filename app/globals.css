@@ -31,7 +31,7 @@
 
   .dark {
     --background: #0b0e14;
-    /* User requested Deep slate background */
+    /* Deep slate */
     --foreground: #f8fafc;
     --card: #121826;
     --card-foreground: #f8fafc;
@@ -114,12 +114,41 @@ body {
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
   overscroll-behavior-y: none;
-  /* Prevent pull-to-refresh on body if desirable, or at least bounce consistency */
   padding-bottom: env(safe-area-inset-bottom);
+
+  /* Premium Mesh Background */
+  background-image:
+    radial-gradient(at 0% 0%, rgba(34, 197, 94, 0.05) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(59, 130, 246, 0.05) 0px, transparent 50%);
+  background-attachment: fixed;
 }
 
 /* Hide scrollbar for cleaner UI on mobile */
 ::-webkit-scrollbar {
   width: 0px;
   background: transparent;
+}
+
+/* Utilities */
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.glass {
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.card-glass {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
