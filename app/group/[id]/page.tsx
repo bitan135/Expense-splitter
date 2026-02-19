@@ -6,7 +6,7 @@ import { useStore } from "@/lib/store"
 import { Header } from "@/components/layout/header"
 import { Button, Card, Input } from "@/components/ui/base"
 import { Modal } from "@/components/ui/modal"
-import { ArrowLeft, Plus, Users, Receipt, FileText, Trash2, Settings } from "lucide-react"
+import { ArrowLeft, Plus, Users, Receipt, FileText, Trash2, Settings, ArrowRight } from "lucide-react"
 import { calculateBalances } from "@/lib/logic/calculateBalances"
 import { cn } from "@/lib/utils"
 import { Group, Expense, Member } from "@/types"
@@ -39,7 +39,7 @@ const MemberItem = memo(({ member, balance, onSettle }: { member: Member, balanc
                             {isPositive ? "Gets back" : "Owes"} ₹{Math.abs(balance).toFixed(2)}
                         </span>
                     )}
-                    {isZero && <span className="text-xs text-muted-foreground">Settled</span>}
+                    {isZero && <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Settled</span>}
                 </div>
             </div>
 
@@ -66,6 +66,11 @@ MemberItem.displayName = "MemberItem"
 
 const ExpenseItem = memo(({ expense, group, onClick }: { expense: Expense, group: Group, onClick: (eId: string) => void }) => {
     const payer = group.members.find(m => m.id === expense.paidBy)?.name || "Unknown"
+    const isSettlement = expense.type === 'settlement'
+
+    // For settlement, find who received it
+    const receiverId = isSettlement ? Object.keys(expense.splits)[0] : null
+    const receiver = receiverId ? group.members.find(m => m.id === receiverId)?.name || "Unknown" : ""
 
     return (
         <Card
@@ -76,7 +81,13 @@ const ExpenseItem = memo(({ expense, group, onClick }: { expense: Expense, group
                 <div className="flex flex-col gap-1">
                     <span className="font-semibold text-lg leading-tight text-foreground">{expense.title}</span>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <span className="font-medium text-foreground bg-secondary px-2 py-0.5 rounded-md">{payer} paid</span>
+                        {isSettlement ? (
+                            <span className="font-medium text-foreground bg-secondary px-2 py-0.5 rounded-md flex items-center gap-1">
+                                {payer} <ArrowRight size={10} /> {receiver}
+                            </span>
+                        ) : (
+                            <span className="font-medium text-foreground bg-secondary px-2 py-0.5 rounded-md">{payer} paid</span>
+                        )}
                         <span>•</span>
                         <span>{new Date(expense.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
                     </div>

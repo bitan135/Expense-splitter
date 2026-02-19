@@ -54,11 +54,13 @@ export default function StatementPage({ params }: { params: Promise<{ id: string
                             .sort(([, a], [, b]) => b - a) // Most positive first
                             .map(([memberId, amount]) => {
                                 const member = group.members.find(m => m.id === memberId)
-                                if (!member || Math.abs(amount) < 0.01) return null
+                                if (!member) return null
 
+                                const isZero = Math.abs(amount) < 0.01
                                 const isPositive = amount > 0
+
                                 return (
-                                    <Card key={memberId} className="p-4 flex justify-between items-center bg-card/40 border-l-4" style={{ borderLeftColor: isPositive ? '#34D399' : '#F87171' }}>
+                                    <Card key={memberId} className={cn("p-4 flex justify-between items-center bg-card/40 border-l-4", isZero ? "border-muted" : "")} style={{ borderLeftColor: isZero ? undefined : (isPositive ? '#34D399' : '#F87171') }}>
                                         <div className="flex items-center gap-3">
                                             <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center font-bold text-xs text-muted-foreground">
                                                 {member.name.substring(0, 2).toUpperCase()}
@@ -66,11 +68,11 @@ export default function StatementPage({ params }: { params: Promise<{ id: string
                                             <span className="font-medium text-lg">{member.name}</span>
                                         </div>
                                         <div className="text-right">
-                                            <div className={cn("text-lg font-bold tabular-nums", isPositive ? "text-emerald-400" : "text-rose-400")}>
-                                                {isPositive ? "+" : "-"}₹{Math.abs(amount).toFixed(2)}
+                                            <div className={cn("text-lg font-bold tabular-nums", isZero ? "text-muted-foreground" : (isPositive ? "text-emerald-400" : "text-rose-400"))}>
+                                                {isZero ? "Settled" : `${isPositive ? "+" : "-"}₹${Math.abs(amount).toFixed(2)}`}
                                             </div>
                                             <div className="text-[10px] uppercase tracking-wide opacity-50 font-bold">
-                                                {isPositive ? "Gets Back" : "Owes"}
+                                                {isZero ? "All Good" : (isPositive ? "Gets Back" : "Owes")}
                                             </div>
                                         </div>
                                     </Card>

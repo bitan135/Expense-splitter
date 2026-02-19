@@ -32,7 +32,10 @@ export const exportStatementPNG = (group: Group) => {
     const headerHeight = 180;
 
     // Net Balances Section
-    const validBalances = Object.entries(balances).filter(([, bal]) => Math.abs(bal) > 0.01);
+    // Net Balances Section
+    // Include everyone logic? Or just non-zero. User prompt implies "Statement section should be fixed in net balance it should say settled"
+    // So we should include 0 balance members.
+    const validBalances = Object.entries(balances);
     const balancesHeight = 80 + (validBalances.length * 60) + 40; // Title + items + padding
 
     // Settings Section (Settlements)
@@ -121,7 +124,8 @@ export const exportStatementPNG = (group: Group) => {
             if (!member) return;
 
             const isPos = amount > 0;
-            const color = isPos ? accentColor : dangerColor;
+            const isZero = Math.abs(amount) < 0.01;
+            const color = isZero ? mutedColor : (isPos ? accentColor : dangerColor);
 
             // Name
             ctx.fillStyle = textColor;
@@ -131,15 +135,27 @@ export const exportStatementPNG = (group: Group) => {
 
             // Amount
             ctx.fillStyle = color;
-            ctx.font = "bold 20px -apple-system, sans-serif"; // Monospace-ish nums not avail in standdard fonts easily without loading
+            ctx.font = "bold 20px -apple-system, sans-serif";
             ctx.textAlign = "right";
-            const prefix = isPos ? "+" : "";
-            ctx.fillText(`${prefix}₹${amount.toFixed(2)}`, width - padding, y + 25);
+
+            let amountText = "";
+            let subText = "";
+
+            if (isZero) {
+                amountText = "Settled";
+                subText = "ALL GOOD";
+            } else {
+                const prefix = isPos ? "+" : "";
+                amountText = `${prefix}₹${amount.toFixed(2)}`;
+                subText = isPos ? "GETS BACK" : "OWES";
+            }
+
+            ctx.fillText(amountText, width - padding, y + 25);
 
             // Subtext
-            ctx.fillStyle = isPos ? "#22c55e80" : "#F8514980";
+            ctx.fillStyle = isZero ? "#8B949E80" : (isPos ? "#22c55e80" : "#F8514980");
             ctx.font = "600 12px -apple-system, sans-serif";
-            ctx.fillText(isPos ? "GETS BACK" : "OWES", width - padding, y + 45);
+            ctx.fillText(subText, width - padding, y + 45);
 
             y += 68;
         });
@@ -200,6 +216,14 @@ export const exportStatementPNG = (group: Group) => {
 
         recentExpenses.forEach(e => {
             const payer = group.members.find(m => m.id === e.paidBy)?.name || "Unknown";
+            const isSettlement = e.type === 'settlement';
+            let subText = `${payer} paid`;
+
+            if (isSettlement) {
+                const receiverId = Object.keys(e.splits)[0];
+                const receiver = group.members.find(m => m.id === receiverId)?.name || "Unknown";
+                subText = `${payer} settled to ${receiver}`;
+            }
 
             ctx.fillStyle = textColor;
             ctx.font = "500 18px -apple-system, sans-serif";
@@ -208,7 +232,7 @@ export const exportStatementPNG = (group: Group) => {
 
             ctx.fillStyle = mutedColor;
             ctx.font = "14px -apple-system, sans-serif";
-            ctx.fillText(`${payer} paid`, padding, y + 42);
+            ctx.fillText(subText, padding, y + 42);
 
             ctx.fillStyle = textColor;
             ctx.font = "bold 18px -apple-system, sans-serif";

@@ -1,4 +1,4 @@
-export type SplitType = 'equal' | 'exact' | 'custom' | 'percent' | 'exclude';
+export type SplitType = 'equal' | 'exact' | 'custom' | 'percent' | 'exclude' | 'settlement';
 
 export interface Member {
     id: string;

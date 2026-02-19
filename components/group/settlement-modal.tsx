@@ -75,7 +75,7 @@ export function SettlementModal({
                     amount: numAmount,
                     paidBy: payerId, // The person sending money
                     createdAt: Date.now(),
-                    type: 'exact',
+                    type: 'settlement',
                     splits: {
                         [receiverId]: numAmount // The person receiving money (consumes the payment)
                     }

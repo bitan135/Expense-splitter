@@ -95,6 +95,17 @@ export const calculateShares = (
             return distributeTotal(amount, weights);
         }
 
+        case 'settlement': {
+            // Settlement: 100% of the amount goes to the person specified in splits
+            // The split value must match the amount
+            const recipientId = Object.keys(activeSplits)[0];
+            if (!recipientId) return {};
+
+            const result: Record<string, number> = {};
+            result[recipientId] = amount;
+            return result;
+        }
+
         default:
             return {};
     }
