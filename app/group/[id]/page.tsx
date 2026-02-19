@@ -166,7 +166,7 @@ export default function GroupPage({ params }: { params: Promise<{ id: string }> 
     if (!state.loaded) return <div className="p-10 text-center text-muted-foreground">Loading...</div>
     if (!group) return <div className="p-10 text-center text-muted-foreground">Group not found</div>
 
-    const totalSpend = group.expenses.reduce((sum, e) => sum + e.amount, 0)
+    const totalSpend = group.expenses.filter(e => e.type !== 'settlement').reduce((sum, e) => sum + e.amount, 0)
 
     return (
         <div className="min-h-screen bg-background pb-32">
@@ -218,7 +218,7 @@ export default function GroupPage({ params }: { params: Promise<{ id: string }> 
                 {/* Expense List */}
                 <section className="space-y-4">
                     <div className="flex items-center justify-between px-1">
-                        <h3 className="text-label">Recent Activity</h3>
+                        <h3 className="text-label">Saved Activity</h3>
                     </div>
                     <div className="grid gap-3">
                         {group.expenses.length > 0 ? (

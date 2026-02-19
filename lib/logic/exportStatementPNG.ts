@@ -22,11 +22,10 @@ export const exportStatementPNG = (group: Group) => {
     // --- Data Prep ---
     const balances = calculateBalances(group);
     const settlements = optimizeSettlement(balances);
-    // Recent expenses (Last 8)
-    const recentExpenses = group.expenses
+    // All expenses (for saved activity section)
+    const allExpenses = group.expenses
         .slice()
-        .sort((a, b) => b.createdAt - a.createdAt)
-        .slice(0, 8);
+        .sort((a, b) => b.createdAt - a.createdAt);
 
     // --- Layout Calculation ---
     const headerHeight = 180;
@@ -42,7 +41,7 @@ export const exportStatementPNG = (group: Group) => {
     const settlementsHeight = settlements.length > 0 ? 80 + (settlements.length * 70) + 40 : 0;
 
     // Expenses Section
-    const expensesHeight = recentExpenses.length > 0 ? 80 + (recentExpenses.length * 60) + 40 : 0;
+    const expensesHeight = allExpenses.length > 0 ? 80 + (allExpenses.length * 60) + 40 : 0;
 
     const footerHeight = 100;
 
@@ -101,7 +100,7 @@ export const exportStatementPNG = (group: Group) => {
     ctx.font = "500 18px -apple-system, sans-serif";
     ctx.fillText(`Statement · ${new Date().toLocaleDateString()}`, padding, y);
 
-    const totalSpend = group.expenses.reduce((sum, e) => sum + e.amount, 0);
+    const totalSpend = group.expenses.filter(e => e.type !== 'settlement').reduce((sum, e) => sum + e.amount, 0);
     ctx.fillStyle = textColor;
     ctx.font = "bold 24px -apple-system, sans-serif";
     ctx.textAlign = "right";
@@ -206,15 +205,15 @@ export const exportStatementPNG = (group: Group) => {
     }
 
     // --- 4. Recent Activity ---
-    if (recentExpenses.length > 0) {
+    if (allExpenses.length > 0) {
         y += 20;
         ctx.fillStyle = mutedColor;
         ctx.font = "600 14px -apple-system, sans-serif";
         ctx.textAlign = "left";
-        ctx.fillText(`RECENT ACTIVITY (${recentExpenses.length})`, padding, y);
+        ctx.fillText(`SAVED ACTIVITY (${allExpenses.length})`, padding, y);
         y += 30;
 
-        recentExpenses.forEach(e => {
+        allExpenses.forEach(e => {
             const payer = group.members.find(m => m.id === e.paidBy)?.name || "Unknown";
             const isSettlement = e.type === 'settlement';
             let subText = `${payer} paid`;
