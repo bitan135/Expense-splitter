@@ -24,7 +24,7 @@ export const calculateShares = (
         }
     });
 
-    if (amount <= 0) return {};
+    if (amount <= 0 || isNaN(amount) || !isFinite(amount)) return {};
     if (memberIds.length === 0) return {};
 
     switch (type) {
@@ -63,10 +63,11 @@ export const calculateShares = (
                 throw new ValidationError(`Total shares (₹${safeFloat(totalCustom)}) must equal expense amount (₹${amount})`);
             }
 
-            // Since it's custom, we trust the inputs but ensure no weird floats
+            // Since it's custom, we trust the inputs but ensure no weird floats or negatives
             const result: Record<string, number> = {};
             memberIds.forEach(id => {
-                result[id] = safeFloat(activeSplits[id] || 0);
+                const val = activeSplits[id] || 0;
+                result[id] = safeFloat(Math.max(0, val));
             });
             return result;
         }

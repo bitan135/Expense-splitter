@@ -137,9 +137,28 @@ export const StoreProvider = ({ children }: { children: React.ReactNode }) => {
         if (saved) {
             try {
                 const parsed = JSON.parse(saved);
-                dispatch({ type: "LOAD_STATE", payload: parsed });
+                // Structural validation: ensure data has expected shape
+                if (
+                    parsed &&
+                    typeof parsed === 'object' &&
+                    Array.isArray(parsed.groups) &&
+                    parsed.groups.every((g: unknown) =>
+                        g && typeof g === 'object' &&
+                        typeof (g as Record<string, unknown>).id === 'string' &&
+                        Array.isArray((g as Record<string, unknown>).members) &&
+                        Array.isArray((g as Record<string, unknown>).expenses)
+                    )
+                ) {
+                    dispatch({ type: "LOAD_STATE", payload: parsed });
+                } else {
+                    console.warn("Corrupt localStorage state, resetting.");
+                    localStorage.removeItem("expense-splitter-state");
+                    dispatch({ type: "LOAD_STATE", payload: initialState });
+                }
             } catch (e) {
                 console.error("Failed to load state", e);
+                localStorage.removeItem("expense-splitter-state");
+                dispatch({ type: "LOAD_STATE", payload: initialState });
             }
         } else {
             // Just trigger loaded

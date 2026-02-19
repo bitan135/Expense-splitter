@@ -1,7 +1,9 @@
 /**
- * Safely rounds a number to 2 decimal places to avoid floating point errors
+ * Safely rounds a number to 2 decimal places to avoid floating point errors.
+ * Guards against NaN and Infinity.
  */
 export const safeFloat = (num: number): number => {
+    if (!isFinite(num)) return 0;
     return Math.round((num + Number.EPSILON) * 100) / 100;
 };
 
@@ -32,7 +34,7 @@ export const distributeTotal = (
         const ratio = weights[id] / totalWeight;
         const share = Math.floor(total * ratio * 100) / 100;
         result[id] = share;
-        distributedSum += share;
+        distributedSum = safeFloat(distributedSum + share);
     });
 
     // Second pass: distribute remainder cents

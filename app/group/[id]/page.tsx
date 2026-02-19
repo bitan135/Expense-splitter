@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, use, memo, useCallback } from "react"
+import { useState, use, memo, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { useStore } from "@/lib/store"
 import { Header } from "@/components/layout/header"
@@ -124,7 +124,7 @@ export default function GroupPage({ params }: { params: Promise<{ id: string }> 
     }>({ maxAmount: 0 })
 
     const group = state.groups.find(g => g.id === id)
-    const balances = group ? calculateBalances(group) : {}
+    const balances = useMemo(() => group ? calculateBalances(group) : {}, [group])
 
     const handleAddMember = useCallback(() => {
         if (!newMemberName.trim()) return
@@ -166,7 +166,9 @@ export default function GroupPage({ params }: { params: Promise<{ id: string }> 
     if (!state.loaded) return <div className="p-10 text-center text-muted-foreground">Loading...</div>
     if (!group) return <div className="p-10 text-center text-muted-foreground">Group not found</div>
 
-    const totalSpend = group.expenses.filter(e => e.type !== 'settlement').reduce((sum, e) => sum + e.amount, 0)
+    const totalSpend = useMemo(() =>
+        group.expenses.filter(e => e.type !== 'settlement').reduce((sum, e) => sum + e.amount, 0)
+        , [group.expenses])
 
     return (
         <div className="min-h-screen bg-background pb-32">

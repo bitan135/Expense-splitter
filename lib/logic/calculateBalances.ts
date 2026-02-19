@@ -14,8 +14,10 @@ export const calculateBalances = (group: Group): Record<string, number> => {
     group.members.forEach(m => balances[m.id] = 0);
 
     group.expenses.forEach(expense => {
-        // 1. Payer gets credit
-        balances[expense.paidBy] = safeFloat(balances[expense.paidBy] + expense.amount);
+        // 1. Payer gets credit (only if they still exist in balances)
+        if (balances[expense.paidBy] !== undefined) {
+            balances[expense.paidBy] = safeFloat(balances[expense.paidBy] + expense.amount);
+        }
 
         // 2. Splitters get debit
         // We re-calculate shares to ensure consistency, or store calculated shares in expense?
@@ -71,6 +73,13 @@ export const calculateBalances = (group: Group): Record<string, number> => {
 
         } catch (e) {
             console.warn(`Error calculating shares for expense ${expense.id}:`, e);
+        }
+    });
+
+    // Sanitize negative-zero values
+    Object.keys(balances).forEach(id => {
+        if (Object.is(balances[id], -0) || Math.abs(balances[id]) < 0.005) {
+            balances[id] = 0;
         }
     });
 

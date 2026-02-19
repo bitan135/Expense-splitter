@@ -1,6 +1,6 @@
 "use client"
 
-import { use, useMemo } from "react"
+import { use, useMemo, useCallback } from "react"
 import { useStore } from "@/lib/store"
 import { Header } from "@/components/layout/header"
 import { Button, Card } from "@/components/ui/base"
@@ -26,9 +26,9 @@ export default function StatementPage({ params }: { params: Promise<{ id: string
         return Object.keys(balances).length > 0 ? optimizeSettlement(balances) : []
     }, [balances])
 
-    const handleExport = () => {
+    const handleExport = useCallback(() => {
         if (group) exportStatementPNG(group)
-    }
+    }, [group])
 
     if (!state.loaded) return <div>Loading...</div>
     if (!group) return <div>Group not found</div>

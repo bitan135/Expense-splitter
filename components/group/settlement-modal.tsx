@@ -5,6 +5,7 @@ import { Button, Input } from "@/components/ui/base"
 import { Modal } from "@/components/ui/modal"
 import { Group, Member } from "@/types"
 import { useStore } from "@/lib/store"
+import { safeFloat } from "@/lib/logic/rounding"
 import { ArrowRight, Maximize2 } from "lucide-react"
 
 interface SettlementModalProps {
@@ -38,8 +39,8 @@ export function SettlementModal({
     }, [isOpen, initialPayerId, initialReceiverId])
 
     const handleSettle = () => {
-        const numAmount = parseFloat(amount)
-        if (!payerId || !receiverId || isNaN(numAmount) || numAmount <= 0) return
+        const numAmount = safeFloat(parseFloat(amount))
+        if (!payerId || !receiverId || payerId === receiverId || isNaN(numAmount) || numAmount <= 0) return
 
         const payer = group.members.find(m => m.id === payerId)
         const receiver = group.members.find(m => m.id === receiverId)
@@ -100,7 +101,7 @@ export function SettlementModal({
                         <select
                             value={payerId}
                             onChange={(e) => setPayerId(e.target.value)}
-                            className="bg-transparent font-semibold text-sm text-center w-full appearance-none outline-none"
+                            className="bg-transparent font-semibold text-sm text-center w-full appearance-none outline-none min-h-[44px]"
                         >
                             <option value="" disabled>Select</option>
                             {group.members.map(m => (
@@ -116,7 +117,7 @@ export function SettlementModal({
                         <select
                             value={receiverId}
                             onChange={(e) => setReceiverId(e.target.value)}
-                            className="bg-transparent font-semibold text-sm text-center w-full appearance-none outline-none"
+                            className="bg-transparent font-semibold text-sm text-center w-full appearance-none outline-none min-h-[44px]"
                         >
                             <option value="" disabled>Select</option>
                             {group.members.map(m => (
@@ -158,7 +159,7 @@ export function SettlementModal({
                 <Button
                     className="w-full h-12 text-lg font-bold shadow-lg"
                     onClick={handleSettle}
-                    disabled={!amount || parseFloat(amount) <= 0 || !payerId || !receiverId}
+                    disabled={!amount || parseFloat(amount) <= 0 || !payerId || !receiverId || payerId === receiverId}
                 >
                     Record Payment
                 </Button>

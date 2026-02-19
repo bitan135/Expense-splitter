@@ -241,7 +241,8 @@ export default function AddExpensePage({ params }: { params: Promise<{ id: strin
                                             </span>
                                             <input
                                                 type="number"
-                                                className="w-full bg-secondary rounded-lg py-2 pl-2 pr-6 text-right text-lg font-bold focus:outline-none focus:ring-2 ring-foreground/20 font-mono"
+                                                inputMode="decimal"
+                                                className="w-full bg-secondary rounded-lg py-2 pl-2 pr-6 text-right text-lg font-bold focus:outline-none focus:ring-2 ring-foreground/20 font-mono min-h-[44px]"
                                                 placeholder="0"
                                                 value={getInputValue(member.id)}
                                                 onChange={(e) => handleSplitChange(member.id, e.target.value)}

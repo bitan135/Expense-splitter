@@ -108,6 +108,10 @@ body {
   touch-action: manipulation;
   overscroll-behavior-y: none;
   padding-bottom: env(safe-area-inset-bottom);
+
+  /* Smooth scroll */
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
 }
 
 /* Utilities */
@@ -130,7 +134,7 @@ body {
   background-color: var(--card);
   border-radius: 1.75rem;
   /* 28px */
-  transition: all 0.2s ease-out;
+  transition: all 120ms ease-out;
 }
 
 /* Light mode specific shadow */
@@ -174,7 +178,11 @@ body {
 }
 
 /* Animations */
+.active-press {
+  will-change: transform;
+  transition: transform 120ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 .active-press:active {
-  transform: scale(0.96);
-  transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: scale(0.97);
 }
