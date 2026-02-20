@@ -1,9 +1,9 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useState, useEffect } from "react"
 import { Modal } from "@/components/ui/modal"
 import { Button } from "@/components/ui/base"
-import { generateQrSvg } from "@/lib/qr-generator"
+import { generateQrDataUrl } from "@/lib/qr-generator"
 import { buildUpiUrl } from "@/lib/upi-store"
 
 interface UpiQrModalProps {
@@ -28,31 +28,44 @@ export function UpiQrModal({
         return buildUpiUrl(upiId, payeeName, amount)
     }, [upiId, payeeName, amount])
 
-    const qrSvg = useMemo(() => {
-        if (!upiUrl) return ""
-        try {
-            return generateQrSvg(upiUrl, 3, 4)
-        } catch {
-            return ""
+    const [qrDataUrl, setQrDataUrl] = useState<string>("")
+    const [qrError, setQrError] = useState(false)
+
+    useEffect(() => {
+        if (!upiUrl || !isOpen) {
+            setQrDataUrl("")
+            setQrError(false)
+            return
         }
-    }, [upiUrl])
+        let cancelled = false
+        generateQrDataUrl(upiUrl, 280)
+            .then(url => { if (!cancelled) setQrDataUrl(url) })
+            .catch(() => { if (!cancelled) setQrError(true) })
+        return () => { cancelled = true }
+    }, [upiUrl, isOpen])
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="UPI Payment">
             <div className="flex flex-col items-center space-y-6 pt-2">
 
                 {/* QR Code */}
-                {qrSvg ? (
+                {qrDataUrl ? (
                     <div className="qr-container p-4 bg-white rounded-3xl shadow-lg">
-                        <div
-                            dangerouslySetInnerHTML={{ __html: qrSvg }}
-                            className="w-52 h-52"
-                            style={{ lineHeight: 0 }}
+                        <img
+                            src={qrDataUrl}
+                            alt="UPI Payment QR Code"
+                            width={240}
+                            height={240}
+                            style={{ imageRendering: "pixelated" }}
                         />
                     </div>
-                ) : (
+                ) : qrError ? (
                     <div className="w-52 h-52 bg-secondary rounded-3xl flex items-center justify-center text-muted-foreground text-sm">
                         Unable to generate QR
+                    </div>
+                ) : (
+                    <div className="w-52 h-52 bg-secondary rounded-3xl flex items-center justify-center">
+                        <div className="w-6 h-6 border-2 border-muted-foreground/30 border-t-foreground rounded-full animate-spin" />
                     </div>
                 )}
 
