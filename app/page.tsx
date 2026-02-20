@@ -1,26 +1,21 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useStore } from "@/lib/store"
 import { Button, Card, Input } from "@/components/ui/base"
 import { Modal } from "@/components/ui/modal"
 import { Header } from "@/components/layout/header"
-import { Plus, Trash2, Moon, Sun } from "lucide-react"
-import { useTheme } from "next-themes"
+import { SettingsModal } from "@/components/settings/settings-modal"
+import { Plus, Trash2, Settings } from "lucide-react"
 
 export default function HomePage() {
   const { state, dispatch } = useStore()
   const router = useRouter()
-  const { theme, setTheme } = useTheme()
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [newGroupName, setNewGroupName] = useState("")
-  const [mounted, setMounted] = useState(false)
 
-  // Avoid hydration mismatch
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   const handleCreateGroup = () => {
     if (!newGroupName.trim()) return
@@ -36,9 +31,6 @@ export default function HomePage() {
     }
   }
 
-  const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark")
-  }
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -46,15 +38,11 @@ export default function HomePage() {
         title="Your Groups"
         rightAction={
           <button
-            onClick={toggleTheme}
+            onClick={() => setIsSettingsOpen(true)}
             className="p-2 rounded-full hover:bg-muted transition-colors"
-            aria-label="Toggle theme"
+            aria-label="Settings"
           >
-            {mounted ? (
-              theme === "dark" ? <Sun size={20} /> : <Moon size={20} />
-            ) : (
-              <div className="w-5 h-5" /> // Placeholder
-            )}
+            <Settings size={20} />
           </button>
         }
       />
@@ -117,6 +105,8 @@ export default function HomePage() {
           </Button>
         </div>
       </Modal>
+
+      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
     </div>
   )
 }
