@@ -51,7 +51,7 @@ export function SettlementModal({
     const numAmount = safeFloat(parseFloat(amount))
     const formValid = !!payerId && !!receiverId && payerId !== receiverId && !isNaN(numAmount) && numAmount > 0
 
-    const recordSettlement = useCallback(() => {
+    const recordSettlement = useCallback((method: 'cash' | 'upi') => {
         const settleAmount = safeFloat(parseFloat(amount))
         if (!payerId || !receiverId || payerId === receiverId || isNaN(settleAmount) || settleAmount <= 0) return
 
@@ -71,6 +71,7 @@ export function SettlementModal({
                     paidBy: payerId,
                     createdAt: Date.now(),
                     type: 'settlement',
+                    settlementMethod: method,
                     splits: {
                         [receiverId]: settleAmount
                     }
@@ -86,7 +87,7 @@ export function SettlementModal({
     }
 
     const handleCash = () => {
-        recordSettlement()
+        recordSettlement('cash')
     }
 
     const handleUpi = () => {
@@ -100,7 +101,7 @@ export function SettlementModal({
 
     const handleUpiDone = () => {
         setUpiQrOpen(false)
-        recordSettlement()
+        recordSettlement('upi')
     }
 
     const setMax = () => {
@@ -254,6 +255,7 @@ export function SettlementModal({
                 upiId={upiId}
                 payeeName={upiName}
                 amount={numAmount}
+                note={group.name}
                 onDone={handleUpiDone}
             />
         </>

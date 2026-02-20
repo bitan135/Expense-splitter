@@ -80,11 +80,23 @@ const ExpenseItem = memo(({ expense, group, onClick }: { expense: Expense, group
             <div className="flex justify-between items-start">
                 <div className="flex flex-col gap-1">
                     <span className="font-semibold text-lg leading-tight text-foreground">{expense.title}</span>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
                         {isSettlement ? (
-                            <span className="font-medium text-foreground bg-secondary px-2 py-0.5 rounded-md flex items-center gap-1">
-                                {payer} <ArrowRight size={10} /> {receiver}
-                            </span>
+                            <>
+                                <span className="font-medium text-foreground bg-secondary px-2 py-0.5 rounded-md flex items-center gap-1">
+                                    {payer} <ArrowRight size={10} /> {receiver}
+                                </span>
+                                {expense.settlementMethod && (
+                                    <span className={cn(
+                                        "text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-md",
+                                        expense.settlementMethod === 'upi'
+                                            ? "bg-violet-500/10 text-violet-600"
+                                            : "bg-emerald-500/10 text-emerald-600"
+                                    )}>
+                                        {expense.settlementMethod === 'upi' ? 'UPI' : 'Cash'}
+                                    </span>
+                                )}
+                            </>
                         ) : (
                             <span className="font-medium text-foreground bg-secondary px-2 py-0.5 rounded-md">{payer} paid</span>
                         )}

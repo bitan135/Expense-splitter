@@ -13,6 +13,7 @@ export interface Expense {
     paidBy: string; // memberId
     type: SplitType;
     splits: Record<string, number>; // memberId -> value (amount, percent, or 0/1 for exclude)
+    settlementMethod?: 'cash' | 'upi'; // only set for type === 'settlement'
     createdAt: number;
 }
 

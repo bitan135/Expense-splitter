@@ -12,6 +12,7 @@ interface UpiQrModalProps {
     upiId: string
     payeeName: string
     amount: number
+    note?: string
     onDone: () => void
 }
 
@@ -21,12 +22,13 @@ export function UpiQrModal({
     upiId,
     payeeName,
     amount,
+    note,
     onDone,
 }: UpiQrModalProps) {
     const upiUrl = useMemo(() => {
         if (!upiId || !payeeName || amount <= 0) return ""
-        return buildUpiUrl(upiId, payeeName, amount)
-    }, [upiId, payeeName, amount])
+        return buildUpiUrl(upiId, payeeName, amount, note || "Expense Settlement")
+    }, [upiId, payeeName, amount, note])
 
     const [qrDataUrl, setQrDataUrl] = useState<string>("")
     const [qrError, setQrError] = useState(false)
