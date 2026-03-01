@@ -405,14 +405,38 @@ export default function GroupPage({ params }: { params: Promise<{ id: string }> 
                                 {transactions.map((tx, i) => {
                                     const fromName = group.members.find(m => m.id === tx.from)?.name || "?"
                                     const toName = group.members.find(m => m.id === tx.to)?.name || "?"
+
+                                    const isSelfPayer = tx.from === selfId
+                                    const isSelfReceiver = tx.to === selfId
+                                    const type = isSelfPayer ? 'pay' : isSelfReceiver ? 'receive' : 'record'
+                                    const buttonLabel = type === 'record' ? 'Record' : isSelfPayer ? 'Settle' : 'Collect'
+
                                     return (
                                         <div key={i} className="flex items-center justify-between">
-                                            <div className="flex items-center gap-2 text-sm">
-                                                <span className="font-semibold text-foreground">{fromName}</span>
-                                                <ArrowRight size={12} className="text-muted-foreground/40" />
-                                                <span className="font-semibold text-foreground">{toName}</span>
+                                            <div className="flex flex-col">
+                                                <div className="flex items-center gap-2 text-sm">
+                                                    <span className="font-semibold text-foreground">{fromName}</span>
+                                                    <ArrowRight size={12} className="text-muted-foreground/40" />
+                                                    <span className="font-semibold text-foreground">{toName}</span>
+                                                </div>
+                                                <span className="font-bold text-sm tabular-nums mt-0.5">{formatAmount(tx.amount)}</span>
                                             </div>
-                                            <span className="font-bold text-sm tabular-nums">{formatAmount(tx.amount)}</span>
+                                            <Button
+                                                size="sm"
+                                                className={cn(
+                                                    "h-8 px-4 text-xs font-bold transition-all active:scale-95 rounded-xl shrink-0 ml-2 shadow-none",
+                                                    type === 'record' ? "bg-amber-600/10 text-amber-700 dark:text-amber-500 hover:bg-amber-600/20"
+                                                        : isSelfReceiver ? "bg-primary/10 text-primary hover:bg-primary/20"
+                                                            : "bg-destructive/10 text-destructive hover:bg-destructive/20"
+                                                )}
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    Haptics.medium()
+                                                    openSettlement(type, tx.from, tx.to, tx.amount)
+                                                }}
+                                            >
+                                                {buttonLabel}
+                                            </Button>
                                         </div>
                                     )
                                 })}
