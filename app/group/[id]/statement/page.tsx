@@ -23,8 +23,8 @@ export default function StatementPage({ params }: { params: Promise<{ id: string
     }, [group])
 
     const settlements = useMemo(() => {
-        return Object.keys(balances).length > 0 ? optimizeSettlement(balances) : []
-    }, [balances])
+        return group && Object.keys(balances).length > 0 ? optimizeSettlement(group) : []
+    }, [balances, group])
 
     const handleExport = useCallback(async () => {
         if (!group) return

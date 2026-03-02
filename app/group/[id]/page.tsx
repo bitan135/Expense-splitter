@@ -225,7 +225,7 @@ export default function GroupPage({ params }: { params: Promise<{ id: string }> 
 
     const group = state.groups.find(g => g.id === id)
     const balances = useMemo(() => group ? calculateBalances(group) : {}, [group?.members, group?.expenses])
-    const transactions = useMemo(() => optimizeSettlement(balances), [balances])
+    const transactions = useMemo(() => group ? optimizeSettlement(group) : [], [group])
 
     const selfId = group?.selfId
     const [selfPickerOpen, setSelfPickerOpen] = useState(false)

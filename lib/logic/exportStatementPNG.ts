@@ -25,7 +25,7 @@ export const generateStatementCanvas = (group: Group, isDark: boolean = true): H
 
     // --- Data Prep ---
     const balances = calculateBalances(group);
-    const settlements = optimizeSettlement(balances);
+    const settlements = optimizeSettlement(group);
     // Separate expenses and settlements
     const sortedActivity = group.expenses
         .slice()
