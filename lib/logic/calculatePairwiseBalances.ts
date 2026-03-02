@@ -47,5 +47,13 @@ export const calculatePairwiseBalances = (
         }
     });
 
+    // Sanitize floating-point dust and negative-zeros
+    Object.keys(pairwise).forEach(id => {
+        pairwise[id] = safeFloat(pairwise[id]);
+        if (Object.is(pairwise[id], -0) || Math.abs(pairwise[id]) <= 0.005) {
+            pairwise[id] = 0;
+        }
+    });
+
     return pairwise;
 };
